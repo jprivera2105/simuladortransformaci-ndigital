@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simulador de Transformación Digital | Clase 4</title>
+<style>
+  :root{
+    --navy:#0b2d4d;
+    --navy2:#123f67;
+    --blue:#1f6feb;
+    --cyan:#4dc4e8;
+    --teal:#1aa886;
+    --green:#27a96b;
+    --amber:#e7a52b;
+    --red:#d95b52;
+    --ink:#122033;
+    --muted:#5d6b7b;
+    --bg:#f4f7fb;
+    --card:#ffffff;
+    --line:#dce5ef;
+    --soft:#eef5fb;
+    --shadow:0 12px 30px rgba(15,47,78,.10);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(77,196,232,.16), transparent 30%),
+      linear-gradient(180deg,#f8fbff 0,#f4f7fb 100%);
+  }
+  button,input{font:inherit}
+  .app{min-height:100vh}
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;padding:14px 22px;background:rgba(255,255,255,.94);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brandmark{
+    width:44px;height:44px;border-radius:12px;
+    display:grid;place-items:center;background:linear-gradient(145deg,var(--navy),var(--blue));
+    color:white;font-weight:900;letter-spacing:-1px;box-shadow:0 7px 18px rgba(31,111,235,.22)
+  }
+  .brand h1{font-size:16px;margin:0;color:var(--navy);line-height:1.1}
+  .brand p{font-size:12px;margin:4px 0 0;color:var(--muted)}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .pill{
+    border:1px solid var(--line);background:white;padding:8px 12px;border-radius:999px;
+    color:var(--navy);font-weight:750;font-size:12px
+  }
+  .btn{
+    border:0;border-radius:11px;padding:11px 16px;font-weight:800;cursor:pointer;
+    transition:.18s ease;display:inline-flex;align-items:center;justify-content:center;gap:8px
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:linear-gradient(135deg,var(--blue),#0d58c9);color:white;box-shadow:0 8px 18px rgba(31,111,235,.2)}
+  .btn-secondary{background:white;color:var(--navy);border:1px solid var(--line)}
+  .btn-ghost{background:transparent;color:var(--navy);border:1px dashed #b8c8d8}
+  .layout{display:grid;grid-template-columns:255px 1fr;min-height:calc(100vh - 73px)}
+  .sidebar{
+    background:linear-gradient(180deg,var(--navy) 0%,#0a3559 55%,#092844 100%);
+    color:#d8e8f5;padding:22px 16px;position:sticky;top:73px;height:calc(100vh - 73px);
+    display:flex;flex-direction:column;justify-content:space-between
+  }
+  .navitem{
+    display:flex;align-items:center;gap:11px;padding:11px 12px;margin-bottom:6px;border-radius:10px;
+    color:#d8e8f5;font-size:13px;font-weight:650
+  }
+  .navitem.active{background:rgba(55,151,255,.25);color:white;border:1px solid rgba(255,255,255,.09)}
+  .navicon{width:25px;text-align:center}
+  .sidecard{
+    border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:14px;background:rgba(255,255,255,.04)
+  }
+  .sidecard h4{font-size:12px;margin:0 0 10px;color:white}
+  .progress-track{height:9px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan),#7be3d2);width:0%;transition:.35s ease}
+  .side-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:12px}
+  main{padding:24px;max-width:1500px;width:100%;margin:0 auto}
+  .screen{display:none}
+  .screen.active{display:block}
+  .hero{
+    display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:stretch;
+    border-radius:22px;background:white;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden
+  }
+  .hero-copy{padding:38px 40px}
+  .eyebrow{color:var(--blue);font-size:12px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+  .hero h2{font-size:38px;line-height:1.05;letter-spacing:-.03em;color:var(--navy);margin:12px 0 15px}
+  .hero p{color:var(--muted);font-size:16px;line-height:1.65;max-width:760px}
+  .hero-art{
+    min-height:390px;padding:26px;
+    background:
+      linear-gradient(145deg,rgba(7,43,75,.95),rgba(15,84,129,.93)),
+      radial-gradient(circle at 75% 20%,rgba(77,196,232,.35),transparent 30%);
+    color:white;display:flex;flex-direction:column;justify-content:center
+  }
+  .hero-art h3{font-size:22px;margin:0 0 12px}
+  .hero-art p{color:#dbeaf5;font-size:14px}
+  .network{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}
+  .node{padding:12px;border-radius:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);font-size:12px}
+  .mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:24px}
+  .mode{
+    border:1px solid var(--line);background:var(--soft);padding:15px;border-radius:14px;cursor:pointer
+  }
+  .mode.selected{outline:3px solid rgba(31,111,235,.18);border-color:var(--blue);background:#f5f9ff}
+  .mode strong{color:var(--navy);display:block;margin-bottom:5px}
+  .mode span{font-size:12px;color:var(--muted)}
+  .intro-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .stepper{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px
+  }
+  .step{
+    background:white;border:1px solid var(--line);border-radius:13px;padding:10px 12px;position:relative
+  }
+  .step small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+  .step strong{font-size:12px;color:var(--navy)}
+  .step.active{border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,111,235,.1)}
+  .step.done{background:#f1fbf7;border-color:#a6dfc7}
+  .round-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(315px,.55fr);gap:18px}
+  .card{
+    background:white;border:1px solid var(--line);border-radius:17px;box-shadow:0 7px 20px rgba(13,50,83,.06)
+  }
+  .round-card{padding:24px}
+  .round-number{font-size:11px;color:var(--blue);font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  .round-title{font-size:28px;color:var(--navy);margin:5px 0 8px}
+  .round-lead{font-size:14px;line-height:1.65;color:var(--muted)}
+  .scenario{
+    margin:18px 0;padding:16px 17px;border-left:4px solid var(--cyan);background:#f6fbff;border-radius:0 12px 12px 0
+  }
+  .scenario b{color:var(--navy)}
+  .scenario p{margin:6px 0 0;font-size:13px;line-height:1.55;color:#435267}
+  .decision-title{font-size:17px;color:var(--navy);margin:22px 0 6px}
+  .decision-help{font-size:12px;color:var(--muted);margin-bottom:12px}
+  .options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .option{
+    border:1px solid var(--line);border-radius:14px;padding:15px;background:white;cursor:pointer;transition:.18s ease;
+    min-height:170px;display:flex;flex-direction:column
+  }
+  .option:hover{border-color:#8ebbf4;transform:translateY(-2px);box-shadow:0 8px 20px rgba(31,111,235,.08)}
+  .option.selected{border:2px solid var(--blue);background:#f6f9ff;box-shadow:0 0 0 3px rgba(31,111,235,.10)}
+  .option-icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:#eaf3ff;color:var(--blue);font-size:20px}
+  .option h4{font-size:14px;color:var(--navy);margin:12px 0 6px}
+  .option p{font-size:12px;line-height:1.5;color:var(--muted);margin:0;flex:1}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+  .tag{font-size:10px;padding:4px 7px;border-radius:999px;background:#eef4fa;color:#46617f}
+  .round-actions{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+  .round-actions .btn-primary[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+  .metrics{padding:18px;position:sticky;top:98px}
+  .metrics h3{font-size:16px;color:var(--navy);margin:0 0 13px}
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .metric{
+    border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfdff
+  }
+  .metric-top{display:flex;justify-content:space-between;gap:5px;align-items:center;font-size:11px}
+  .metric-top b{color:var(--navy)}
+  .metric-top span{font-weight:800}
+  .bar{height:7px;border-radius:999px;background:#e8eef5;margin-top:8px;overflow:hidden}
+  .bar > div{height:100%;border-radius:inherit;transition:.4s ease}
+  .scorebox{
+    margin-top:10px;padding:13px;border-radius:12px;background:linear-gradient(135deg,#eafaf3,#eef8ff);
+    display:flex;justify-content:space-between;align-items:center
+  }
+  .scorebox .big{font-size:25px;font-weight:900;color:var(--navy)}
+  .feedback{
+    margin-top:12px;padding:14px;border-radius:12px;border:1px solid #cce6db;background:#effaf5;display:none
+  }
+  .feedback.show{display:block}
+  .feedback.bad{border-color:#f0cbc6;background:#fff5f4}
+  .feedback.mid{border-color:#f2ddae;background:#fffaf0}
+  .feedback h4{margin:0 0 5px;font-size:13px;color:var(--navy)}
+  .feedback p{margin:0;font-size:12px;color:#435267;line-height:1.55}
+  .micro-lesson{
+    margin-top:10px;padding:10px 12px;border-radius:10px;background:white;border:1px dashed #b8c8d8;font-size:11px;color:#52637a
+  }
+  .glossary{
+    margin-top:18px;padding:16px;border-radius:14px;background:#f8fbff;border:1px solid var(--line)
+  }
+  .glossary summary{cursor:pointer;font-weight:850;color:var(--navy)}
+  .glossary dl{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:12px}
+  .glossary dt{font-weight:800;color:#23466d}
+  .glossary dd{margin:0;color:var(--muted)}
+  .final-card{padding:28px}
+  .final-hero{
+    display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:center;padding-bottom:22px;border-bottom:1px solid var(--line)
+  }
+  .gauge{
+    width:190px;height:190px;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--blue) calc(var(--score)*1%),#e6edf5 0);
+    position:relative;margin:auto
+  }
+  .gauge:after{content:"";position:absolute;inset:15px;background:white;border-radius:50%}
+  .gauge span{position:relative;z-index:2;font-size:38px;font-weight:900;color:var(--navy)}
+  .final-hero h2{font-size:30px;color:var(--navy);margin:0 0 8px}
+  .final-hero p{color:var(--muted);line-height:1.6}
+  .final-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .final-section{padding:16px;border-radius:13px;border:1px solid var(--line);background:#fbfdff}
+  .final-section h3{font-size:15px;color:var(--navy);margin:0 0 10px}
+  .final-section ul{margin:0;padding-left:18px;color:#4a5b70;font-size:13px;line-height:1.65}
+  .rubric{margin-top:18px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
+  th{background:#edf5fc;color:var(--navy)}
+  td:last-child,th:last-child{text-align:center}
+  .history{margin-top:18px}
+  .history-item{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .history-item b{color:var(--navy)}
+  .badge{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800;background:#edf4fa;color:#46617f}
+  .toast{
+    position:fixed;right:20px;bottom:20px;z-index:50;padding:12px 15px;border-radius:12px;color:white;background:#183a5b;
+    box-shadow:0 12px 24px rgba(0,0,0,.16);transform:translateY(120px);opacity:0;transition:.25s ease;max-width:360px;font-size:12px
+  }
+  .toast.show{transform:translateY(0);opacity:1}
+  .footer-note{font-size:10px;color:#738296;margin-top:14px;line-height:1.5}
+  @media(max-width:1000px){
+    .layout{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .hero{grid-template-columns:1fr}
+    .hero-art{min-height:auto}
+    .round-grid{grid-template-columns:1fr}
+    .metrics{position:static}
+    .options{grid-template-columns:1fr}
+    .stepper{grid-template-columns:1fr 1fr}
+    .final-hero{grid-template-columns:1fr;text-align:center}
+  }
+  @media(max-width:620px){
+    main{padding:14px}
+    .topbar{padding:10px 12px}
+    .hero-copy{padding:25px 22px}
+    .hero h2{font-size:30px}
+    .mode-grid,.final-grid,.metric-grid{grid-template-columns:1fr}
+    .stepper{grid-template-columns:1fr}
+    .pill{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brandmark">TD</div>
+      <div>
+        <h1>Simulador de Transformación Digital</h1>
+        <p>Clase 4 · E-commerce Gerencial 2026</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="pill">Caso académico · ONG / cooperación</span>
+      <button class="btn btn-secondary" onclick="resetSimulator()">Reiniciar</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div>
+        <div class="navitem active"><span class="navicon">⌂</span> Inicio</div>
+        <div class="navitem"><span class="navicon">◎</span> Escenario</div>
+        <div class="navitem"><span class="navicon">↻</span> Rondas</div>
+        <div class="navitem"><span class="navicon">✓</span> Decisiones</div>
+        <div class="navitem"><span class="navicon">▥</span> Resultados</div>
+        <div class="navitem"><span class="navicon">?</span> Ayuda</div>
+      </div>
+      <div class="sidecard">
+        <h4>Tu progreso</h4>
+        <div class="progress-track"><div id="sideProgress" class="progress-fill"></div></div>
+        <div class="side-meta"><span id="sideRound">Sin iniciar</span><strong id="sidePct">0%</strong></div>
+      </div>
+    </aside>
+
+    <main>
+      <section id="intro" class="screen active">
+        <div class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow">Experiencia educativa interactiva</div>
+            <h2>Transforma la organización sin digitalizar el desorden</h2>
+            <p>
+              Una organización de impacto social necesita escalar su operación sin perder coordinación, trazabilidad ni confianza.
+              Tú asumirás el rol de <strong>consultor/a de transformación digital</strong> y deberás tomar decisiones sobre personas,
+              procesos, tecnología, datos y stakeholders.
+            </p>
+            <div class="mode-grid">
+              <div class="mode selected" id="modeFull" onclick="chooseMode('full')">
+                <strong>Modo completo · 5 rondas</strong>
+                <span>Ideal para una clase de 60–80 minutos y debrief final.</span>
+              </div>
+              <div class="mode" id="modeQuick" onclick="chooseMode('quick')">
+                <strong>Modo rápido · 3 rondas</strong>
+                <span>Ideal para una dinámica de 25–35 minutos.</span>
+              </div>
+            </div>
+            <div class="intro-actions">
+              <button class="btn btn-primary" onclick="startSimulator()">Comenzar simulación →</button>
+              <button class="btn btn-secondary" onclick="toggleIntroGlossary()">Ver conceptos clave</button>
+            </div>
+            <details id="introGlossary" class="glossary" style="display:none">
+              <summary>Conceptos clave antes de comenzar</summary>
+              <dl>
+                <dt>Stakeholder</dt><dd>Persona u organización que afecta o es afectada por la operación.</dd>
+                <dt>CRM</dt><dd>Sistema para centralizar relaciones, contactos, compromisos y seguimiento.</dd>
+                <dt>Agilidad</dt><dd>Capacidad de responder y mejorar con rapidez sin perder control.</dd>
+                <dt>KPI</dt><dd>Indicador que ayuda a saber si un proceso está mejorando.</dd>
+                <dt>Trazabilidad</dt><dd>Capacidad de saber qué pasó, quién actuó y cuándo.</dd>
+              </dl>
+            </details>
+          </div>
+          <div class="hero-art">
+            <div class="eyebrow" style="color:#85d8f4">Caso académico</div>
+            <h3>Organización internacional de impacto social</h3>
+            <p>Trabaja con instituciones públicas, aliados, comunidades, cooperación, comunicación, finanzas y dirección.</p>
+            <div class="network">
+              <div class="node">🏛️ Instituciones públicas</div>
+              <div class="node">🤝 Aliados y cooperación</div>
+              <div class="node">👥 Comunidades</div>
+              <div class="node">📣 Comunicación y RRPP</div>
+              <div class="node">💻 Tecnología y datos</div>
+              <div class="node">📊 Dirección y finanzas</div>
+            </div>
+            <p class="footer-note" style="color:#bfd6e7">
+              Caso pedagógico inspirado en problemáticas típicas de ONG y cooperación. No representa procesos operativos actuales de una organización específica.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="simulation" class="screen">
+        <div id="stepper" class="stepper"></div>
+        <div class="round-grid">
+          <div class="card round-card">
+            <div class="round-number" id="roundNumber"></div>
+            <h2 class="round-title" id="roundTitle"></h2>
+            <p class="round-lead" id="roundLead"></p>
+            <div class="scenario">
+              <b id="scenarioLabel"></b>
+              <p id="scenarioText"></p>
+            </div>
+            <h3 class="decision-title" id="decisionQuestion"></h3>
+            <div class="decision-help">Selecciona una opción. Después confirma para ver consecuencias y retroalimentación.</div>
+            <div class="options" id="options"></div>
+            <div class="round-actions">
+              <button id="confirmBtn" class="btn btn-primary" disabled onclick="confirmDecision()">Confirmar decisión →</button>
+              <button class="btn btn-ghost" onclick="showHint()">Pista pedagógica</button>
+              <button id="nextBtn" class="btn btn-secondary" style="display:none" onclick="nextRound()">Siguiente ronda</button>
+            </div>
+            <details class="glossary">
+              <summary>¿Apareció un término que no conoces?</summary>
+              <dl>
+                <dt>Impacto</dt><dd>Qué tanto mejora la organización o el valor para stakeholders.</dd>
+                <dt>Esfuerzo</dt><dd>Tiempo, costo, complejidad y capacidad requerida para implementar.</dd>
+                <dt>Adopción</dt><dd>Qué tanto las personas usan correctamente el nuevo proceso o herramienta.</dd>
+                <dt>Calidad de datos</dt><dd>Qué tan completos, correctos y confiables son los registros.</dd>
+                <dt>Mejora continua</dt><dd>Ciclo de medir, aprender, ajustar y volver a medir.</dd>
+              </dl>
+            </details>
+          </div>
+
+          <aside class="card metrics">
+            <h3>Variables del proyecto</h3>
+            <div class="metric-grid" id="metricGrid"></div>
+            <div class="scorebox">
+              <div><div style="font-size:10px;color:#5a6e84;text-transform:uppercase;font-weight:900">Puntaje actual</div><div class="big"><span id="scoreNow">50</span><span style="font-size:13px"> / 100</span></div></div>
+              <div style="text-align:right"><div style="font-size:10px;color:#5a6e84;text-transform:uppercase;font-weight:900">Progreso</div><strong id="progressNow" style="color:var(--navy)">0%</strong></div>
+            </div>
+            <div id="feedback" class="feedback">
+              <h4 id="feedbackTitle"></h4>
+              <p id="feedbackText"></p>
+              <div id="lessonText" class="micro-lesson"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="final" class="screen">
+        <div class="card final-card">
+          <div class="final-hero">
+            <div id="gauge" class="gauge" style="--score:0"><span id="finalScore">0</span></div>
+            <div>
+              <div class="eyebrow">Cierre de simulación</div>
+              <h2 id="finalTitle">Resultado</h2>
+              <p id="finalSummary"></p>
+              <div class="intro-actions">
+                <button class="btn btn-primary" onclick="resetSimulator()">Volver a intentar</button>
+                <button class="btn btn-secondary" onclick="window.print()">Imprimir / guardar PDF</button>
+              </div>
+            </div>
+          </div>
+          <div class="final-grid">
+            <div class="final-section">
+              <h3>Fortalezas observadas</h3>
+              <ul id="strengths"></ul>
+            </div>
+            <div class="final-section">
+              <h3>Áreas a mejorar</h3>
+              <ul id="improvements"></ul>
+            </div>
+            <div class="final-section">
+              <h3>Recomendaciones finales</h3>
+              <ul id="recommendations"></ul>
+            </div>
+            <div class="final-section">
+              <h3>Principio que debes recordar</h3>
+              <p style="font-size:14px;line-height:1.65;color:#435267;margin:0">
+                <strong style="color:var(--navy)">Tecnología nueva + proceso viejo = problema digitalizado.</strong><br>
+                La transformación sostenible combina proceso rediseñado, personas preparadas, datos confiables, tecnología adecuada y mejora continua.
+              </p>
+            </div>
+          </div>
+
+          <div class="rubric">
+            <h3 style="color:var(--navy)">Rúbrica automática del desempeño</h3>
+            <table>
+              <thead><tr><th>Criterio</th><th>Qué evalúa</th><th>Resultado</th></tr></thead>
+              <tbody id="rubricBody"></tbody>
+            </table>
+          </div>
+
+          <div class="history">
+            <h3 style="color:var(--navy)">Historial de decisiones</h3>
+            <div id="historyList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const metricMeta = {
+  time: {label:"Tiempo disponible", goodHigh:true, color:"#1f6feb"},
+  budget: {label:"Presupuesto", goodHigh:true, color:"#3f88d6"},
+  adoption: {label:"Adopción del equipo", goodHigh:true, color:"#e7a52b"},
+  satisfaction: {label:"Satisfacción stakeholders", goodHigh:true, color:"#1aa886"},
+  efficiency: {label:"Eficiencia del proceso", goodHigh:true, color:"#d95b52"},
+  data: {label:"Calidad de datos", goodHigh:true, color:"#7a68d8"},
+  coordination: {label:"Coordinación", goodHigh:true, color:"#4e9b88"},
+  risk: {label:"Riesgo", goodHigh:false, color:"#d86a56"}
+};
+
+const allRounds = [
+{
+  key:"diagnostico",
+  title:"Diagnóstico: no digitalices el desorden",
+  lead:"La organización quiere comprar tecnología, pero la información está dispersa, los responsables no están claros y los reportes llegan tarde.",
+  label:"Situación",
+  scenario:"Dirección propone implementar de inmediato una plataforma integral. Sin embargo, distintos equipos usan hojas de cálculo, correo y mensajería sin un proceso común.",
+  question:"¿Cuál debería ser tu primera decisión?",
+  hint:"Antes de automatizar, entiende el proceso actual, el problema y quién participa.",
+  options:[
+    {
+      title:"Mapear procesos y stakeholders",
+      text:"Documentar flujos, responsables, puntos de fricción, datos críticos y necesidades de los actores.",
+      tags:["Procesos","Personas","Datos"],
+      quality:"best", points:14,
+      delta:{time:-8,budget:-4,adoption:7,satisfaction:5,efficiency:8,data:8,coordination:10,risk:-7},
+      feedback:"Buena decisión. Evitas automatizar un proceso desordenado y generas una base común para decidir.",
+      lesson:"Principio: primero diagnosticar y rediseñar; luego seleccionar tecnología."
+    },
+    {
+      title:"Comprar un sistema integral",
+      text:"Adquirir CRM, dashboard y automatización desde el inicio para acelerar la transformación.",
+      tags:["Tecnología","Velocidad"],
+      quality:"bad", points:-7,
+      delta:{time:-12,budget:-18,adoption:-9,satisfaction:-4,efficiency:-3,data:-4,coordination:-3,risk:14},
+      feedback:"Decisión riesgosa. La herramienta puede reproducir problemas existentes y generar rechazo del equipo.",
+      lesson:"Principio: tecnología sin proceso claro suele digitalizar la ineficiencia."
+    },
+    {
+      title:"Capacitar primero a todo el equipo",
+      text:"Iniciar con talleres digitales generales antes de definir qué procesos deben cambiar.",
+      tags:["Personas","Adopción"],
+      quality:"mid", points:5,
+      delta:{time:-10,budget:-6,adoption:11,satisfaction:1,efficiency:2,data:1,coordination:3,risk:-2},
+      feedback:"Es útil para preparar a las personas, pero todavía falta entender qué proceso concreto se transformará.",
+      lesson:"Principio: la capacitación funciona mejor cuando está vinculada a un cambio específico."
+    }
+  ]
+},
+{
+  key:"priorizacion",
+  title:"Priorización: impacto antes que moda",
+  lead:"El diagnóstico identificó seis iniciativas posibles. No hay tiempo ni presupuesto para implementarlas todas al mismo tiempo.",
+  label:"Portafolio de iniciativas",
+  scenario:"CRM de stakeholders, dashboard, automatización de reportes, gestión documental, capacitación digital y una app móvil propia compiten por recursos.",
+  question:"¿Qué criterio usarías para decidir qué implementar primero?",
+  hint:"Busca alto impacto, esfuerzo razonable y valor directo para el problema prioritario.",
+  options:[
+    {
+      title:"Matriz impacto / esfuerzo",
+      text:"Priorizar quick wins y proyectos estratégicos; postergar iniciativas vistosas de bajo valor.",
+      tags:["Priorización","Agilidad"],
+      quality:"best", points:14,
+      delta:{time:6,budget:8,adoption:4,satisfaction:7,efficiency:9,data:4,coordination:5,risk:-7},
+      feedback:"Muy buena decisión. Conectas recursos limitados con impacto y viabilidad.",
+      lesson:"Principio: priorizar significa decidir qué NO hacer todavía."
+    },
+    {
+      title:"Elegir la tecnología más avanzada",
+      text:"Seleccionar la solución con más funciones para evitar quedarse atrás frente a otras organizaciones.",
+      tags:["Tecnología","Innovación"],
+      quality:"bad", points:-8,
+      delta:{time:-10,budget:-16,adoption:-7,satisfaction:-3,efficiency:-3,data:-1,coordination:-2,risk:11},
+      feedback:"La sofisticación tecnológica no garantiza valor. Puede aumentar complejidad, costo y resistencia.",
+      lesson:"Principio: la solución debe responder al problema, no a la moda."
+    },
+    {
+      title:"Hacer todas las iniciativas pequeñas",
+      text:"Dividir presupuesto entre todas para mostrar avances simultáneos en múltiples áreas.",
+      tags:["Cobertura","Velocidad"],
+      quality:"mid", points:3,
+      delta:{time:-8,budget:-9,adoption:2,satisfaction:2,efficiency:1,data:2,coordination:1,risk:3},
+      feedback:"Genera actividad, pero dispersa foco y puede dejar muchos cambios incompletos.",
+      lesson:"Principio: agilidad no es hacer muchas cosas; es aprender rápido sobre lo que más importa."
+    }
+  ]
+},
+{
+  key:"implementacion",
+  title:"Implementación: personas + proceso + tecnología",
+  lead:"La organización decide implementar un CRM de stakeholders para centralizar contactos, compromisos y seguimiento institucional.",
+  label:"Semana 3",
+  scenario:"El sistema está configurado, pero algunos equipos siguen usando sus archivos personales y consideran que registrar información es trabajo adicional.",
+  question:"¿Cómo aumentarías la adopción sin frenar la operación?",
+  hint:"La adopción mejora cuando el nuevo flujo simplifica trabajo y cada persona entiende el beneficio.",
+  options:[
+    {
+      title:"Piloto + capacitación + responsables",
+      text:"Probar con un equipo, simplificar campos, capacitar sobre casos reales y definir responsables de calidad.",
+      tags:["Personas","Proceso","Cambio"],
+      quality:"best", points:15,
+      delta:{time:-5,budget:-6,adoption:18,satisfaction:7,efficiency:10,data:13,coordination:11,risk:-9},
+      feedback:"Excelente. Combinas aprendizaje rápido, gestión del cambio y control de calidad.",
+      lesson:"Principio: implementar en ciclos pequeños reduce riesgo y aumenta aprendizaje."
+    },
+    {
+      title:"Obligar el uso desde mañana",
+      text:"Cerrar los archivos anteriores y exigir que todo se registre inmediatamente en el CRM.",
+      tags:["Control","Velocidad"],
+      quality:"bad", points:-6,
+      delta:{time:3,budget:0,adoption:-15,satisfaction:-8,efficiency:-4,data:-8,coordination:-6,risk:13},
+      feedback:"Puede acelerar el cambio en apariencia, pero incrementa rechazo, errores y trabajo paralelo oculto.",
+      lesson:"Principio: cumplimiento sin adopción real genera procesos frágiles."
+    },
+    {
+      title:"Dejar ambos sistemas indefinidamente",
+      text:"Mantener CRM y archivos personales para que cada equipo elija cómo trabajar.",
+      tags:["Flexibilidad","Bajo conflicto"],
+      quality:"mid", points:1,
+      delta:{time:-8,budget:-3,adoption:3,satisfaction:2,efficiency:-5,data:-10,coordination:-7,risk:9},
+      feedback:"Reduce conflicto inicial, pero crea duplicidad y versiones diferentes de la verdad.",
+      lesson:"Principio: la transición necesita una fecha y reglas claras de operación."
+    }
+  ]
+},
+{
+  key:"resistencia",
+  title:"Gobernanza: rapidez, seguridad y calidad",
+  lead:"El CRM empieza a funcionar. Ahora surge una discusión: ¿qué información debe compartir cada equipo y quién puede verla?",
+  label:"Nuevo riesgo",
+  scenario:"Relaciones institucionales necesita historial de contactos. Programas maneja información sensible. Comunicación requiere datos confiables para responder con rapidez.",
+  question:"¿Qué enfoque de gobernanza propones?",
+  hint:"No toda la información necesita el mismo acceso. Diseña permisos según función y riesgo.",
+  options:[
+    {
+      title:"Acceso por roles y datos mínimos",
+      text:"Definir perfiles, permisos, responsables, datos obligatorios y reglas de trazabilidad.",
+      tags:["Datos","Seguridad","Gobernanza"],
+      quality:"best", points:14,
+      delta:{time:-5,budget:-4,adoption:4,satisfaction:8,efficiency:6,data:12,coordination:8,risk:-16},
+      feedback:"Muy buena decisión. Equilibras colaboración, velocidad y protección de información.",
+      lesson:"Principio: la agilidad sostenible necesita reglas claras, no ausencia de control."
+    },
+    {
+      title:"Acceso total para todos",
+      text:"Permitir que cualquier colaborador vea toda la información para acelerar la coordinación.",
+      tags:["Velocidad","Transparencia"],
+      quality:"bad", points:-10,
+      delta:{time:5,budget:0,adoption:4,satisfaction:-9,efficiency:4,data:-3,coordination:5,risk:23},
+      feedback:"La coordinación puede mejorar, pero el riesgo de uso inadecuado de información aumenta demasiado.",
+      lesson:"Principio: más acceso no siempre significa mejor colaboración."
+    },
+    {
+      title:"Restringir casi toda la información",
+      text:"Mantener datos aislados por área y solicitar permisos manuales cuando alguien necesite acceso.",
+      tags:["Seguridad","Control"],
+      quality:"mid", points:2,
+      delta:{time:-12,budget:-1,adoption:-2,satisfaction:-4,efficiency:-7,data:5,coordination:-10,risk:-4},
+      feedback:"Reduce exposición, pero vuelve lenta la coordinación y puede recrear silos.",
+      lesson:"Principio: seguridad y experiencia deben diseñarse juntas."
+    }
+  ]
+},
+{
+  key:"mejora",
+  title:"Mejora continua: medir para aprender",
+  lead:"Tres meses después, la transformación tiene resultados, pero la Dirección pregunta si realmente se está generando valor.",
+  label:"Cierre del ciclo",
+  scenario:"El CRM está activo y existen reportes. Ahora necesitas definir cómo saber si los procesos son más ágiles, claros, medibles y sostenibles.",
+  question:"¿Qué sistema de seguimiento propones?",
+  hint:"Mide adopción, eficiencia, calidad y experiencia; no solo actividad tecnológica.",
+  options:[
+    {
+      title:"KPIs + revisión mensual + ajustes",
+      text:"Medir adopción, tiempo de respuesta, cumplimiento, calidad de datos y satisfacción; revisar y mejorar cada mes.",
+      tags:["KPIs","Mejora continua","Agilidad"],
+      quality:"best", points:16,
+      delta:{time:4,budget:-3,adoption:8,satisfaction:10,efficiency:14,data:10,coordination:9,risk:-8},
+      feedback:"Excelente cierre. Conviertes la transformación en un ciclo de aprendizaje y no en un proyecto de una sola vez.",
+      lesson:"Principio: lo que no se mide no puede mejorarse de forma sistemática."
+    },
+    {
+      title:"Medir número de usuarios y licencias",
+      text:"Evaluar éxito según cantidad de cuentas creadas y frecuencia de ingreso al sistema.",
+      tags:["Actividad","Tecnología"],
+      quality:"mid", points:3,
+      delta:{time:4,budget:1,adoption:4,satisfaction:0,efficiency:0,data:1,coordination:0,risk:0},
+      feedback:"Son datos útiles de adopción, pero no demuestran mejora real del proceso ni valor para stakeholders.",
+      lesson:"Principio: actividad tecnológica no equivale a impacto organizacional."
+    },
+    {
+      title:"Cerrar el proyecto si ya funciona",
+      text:"Considerar terminada la transformación una vez que la plataforma está operativa.",
+      tags:["Cierre","Control"],
+      quality:"bad", points:-9,
+      delta:{time:8,budget:5,adoption:-5,satisfaction:-7,efficiency:-7,data:-5,coordination:-5,risk:10},
+      feedback:"La tecnología puede funcionar hoy y dejar de responder mañana. Sin revisión, los procesos vuelven a degradarse.",
+      lesson:"Principio: transformación digital es capacidad continua de adaptación."
+    }
+  ]
+}
+];
+
+let mode = "full";
+let roundIndexes = [0,1,2,3,4];
+let currentPos = 0;
+let selectedIndex = null;
+let displayedOrder = [];
+let locked = false;
+let history = [];
+let metrics = {};
+let score = 50;
+
+function resetState(){
+  metrics = {time:75,budget:72,adoption:48,satisfaction:58,efficiency:42,data:45,coordination:44,risk:36};
+  score = 50; currentPos=0; selectedIndex=null; locked=false; history=[];
+}
+
+function chooseMode(m){
+  mode=m;
+  document.getElementById("modeFull").classList.toggle("selected",m==="full");
+  document.getElementById("modeQuick").classList.toggle("selected",m==="quick");
+}
+
+function toggleIntroGlossary(){
+  const g=document.getElementById("introGlossary");
+  g.style.display=g.style.display==="none"?"block":"none";
+}
+
+function startSimulator(){
+  resetState();
+  roundIndexes = mode==="full" ? [0,1,2,3,4] : [0,1,4];
+  switchScreen("simulation");
+  renderRound();
+}
+
+function switchScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function clamp(v){ return Math.max(0,Math.min(100,v)); }
+
+function renderStepper(){
+  const names = ["Diagnóstico","Priorización","Implementación","Gobernanza","Mejora continua"];
+  document.getElementById("stepper").innerHTML = roundIndexes.map((idx,pos)=>{
+    const cls = pos<currentPos?"step done":pos===currentPos?"step active":"step";
+    return `<div class="${cls}"><small>Fase ${pos+1}</small><strong>${names[idx]}</strong></div>`;
+  }).join("");
+}
+
+function renderRound(){
+  selectedIndex=null;locked=false;
+  const r=allRounds[roundIndexes[currentPos]];
+  renderStepper();
+  document.getElementById("roundNumber").textContent=`Ronda ${currentPos+1} de ${roundIndexes.length}`;
+  document.getElementById("roundTitle").textContent=r.title;
+  document.getElementById("roundLead").textContent=r.lead;
+  document.getElementById("scenarioLabel").textContent=r.label;
+  document.getElementById("scenarioText").textContent=r.scenario;
+  document.getElementById("decisionQuestion").textContent=r.question;
+
+  // La mejor respuesta cambia de posición según la ronda.
+  const orderByRound = {
+    diagnostico:    [2,0,1], // correcta en posición 2
+    priorizacion:   [1,2,0], // correcta en posición 3
+    implementacion: [0,2,1], // correcta en posición 1
+    resistencia:    [2,0,1], // correcta en posición 2
+    mejora:         [1,2,0]  // correcta en posición 3
+  };
+  displayedOrder = orderByRound[r.key] || [0,1,2];
+
+  document.getElementById("options").innerHTML=displayedOrder.map((originalIndex,displayIndex)=>{
+    const o=r.options[originalIndex];
+    return `
+    <div class="option" onclick="selectOption(${displayIndex})" id="opt${displayIndex}">
+      <div class="option-icon">${["⚙","↗","◎"][displayIndex]||"◆"}</div>
+      <h4>${o.title}</h4>
+      <p>${o.text}</p>
+      <div class="tags">${o.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("confirmBtn").disabled=true;
+  document.getElementById("confirmBtn").style.display="inline-flex";
+  document.getElementById("nextBtn").style.display="none";
+  document.getElementById("feedback").className="feedback";
+  document.getElementById("feedback").classList.remove("show");
+  updateMetricsUI();
+  updateProgress();
+}
+
+function selectOption(i){
+  if(locked) return;
+  selectedIndex=i;
+  document.querySelectorAll(".option").forEach((e,idx)=>e.classList.toggle("selected",idx===i));
+  document.getElementById("confirmBtn").disabled=false;
+}
+
+function confirmDecision(){
+  if(selectedIndex===null||locked) return;
+  locked=true;
+  const r=allRounds[roundIndexes[currentPos]];
+  const originalIndex = displayedOrder[selectedIndex];
+  const o=r.options[originalIndex];
+  Object.keys(o.delta).forEach(k=>metrics[k]=clamp(metrics[k]+o.delta[k]));
+  score=clamp(score+o.points);
+  history.push({round:r.title,choice:o.title,quality:o.quality,points:o.points});
+  updateMetricsUI();
+  showFeedback(o);
+  document.getElementById("confirmBtn").style.display="none";
+  document.getElementById("nextBtn").style.display="inline-flex";
+  if(currentPos===roundIndexes.length-1) document.getElementById("nextBtn").textContent="Ver resultado final →";
+  updateProgress(true);
+}
+
+function showFeedback(o){
+  const box=document.getElementById("feedback");
+  box.className=`feedback show ${o.quality==="bad"?"bad":o.quality==="mid"?"mid":""}`;
+  document.getElementById("feedbackTitle").textContent=o.quality==="best"?"✓ Decisión sólida":o.quality==="mid"?"◐ Decisión parcialmente adecuada":"⚠ Decisión con alto riesgo";
+  document.getElementById("feedbackText").textContent=o.feedback;
+  document.getElementById("lessonText").textContent=o.lesson;
+}
+
+function nextRound(){
+  if(currentPos<roundIndexes.length-1){ currentPos++; renderRound(); }
+  else finalize();
+}
+
+function showHint(){
+  const r=allRounds[roundIndexes[currentPos]];
+  toast("Pista: "+r.hint);
+}
+
+function updateMetricsUI(){
+  const grid=document.getElementById("metricGrid");
+  grid.innerHTML=Object.keys(metricMeta).map(k=>{
+    const m=metricMeta[k], val=Math.round(metrics[k]);
+    const visual = m.goodHigh?val:100-val;
+    return `<div class="metric">
+      <div class="metric-top"><b>${m.label}</b><span>${val}%</span></div>
+      <div class="bar"><div style="width:${visual}%;background:${m.color}"></div></div>
+    </div>`;
+  }).join("");
+  document.getElementById("scoreNow").textContent=Math.round(score);
+}
+
+function updateProgress(afterDecision=false){
+  const done=currentPos+(afterDecision?1:0);
+  const pct=Math.round((done/roundIndexes.length)*100);
+  document.getElementById("progressNow").textContent=pct+"%";
+  document.getElementById("sideProgress").style.width=pct+"%";
+  document.getElementById("sidePct").textContent=pct+"%";
+  document.getElementById("sideRound").textContent=`Ronda ${Math.min(done+1,roundIndexes.length)} de ${roundIndexes.length}`;
+}
+
+function rubricValue(v, reverse=false){
+  const x=reverse?100-v:v;
+  if(x>=75) return "Alto";
+  if(x>=55) return "Medio";
+  return "Bajo";
+}
+
+function finalize(){
+  const structural = (metrics.efficiency+metrics.coordination)/2;
+  const people = metrics.adoption;
+  const dataGov = (metrics.data+(100-metrics.risk))/2;
+  const stakeholder = metrics.satisfaction;
+  const viability=(metrics.time+metrics.budget)/2;
+  const composite=Math.round((score*0.35)+(structural*0.18)+(people*0.12)+(dataGov*0.15)+(stakeholder*0.1)+(viability*0.1));
+  const finalScore=clamp(composite);
+
+  document.getElementById("finalScore").textContent=finalScore;
+  document.getElementById("gauge").style.setProperty("--score",finalScore);
+  let title, summary;
+  if(finalScore>=82){
+    title="Transformación estratégica y sostenible";
+    summary="Tomaste decisiones equilibradas entre agilidad, personas, procesos, datos y tecnología. La organización gana capacidad para aprender y mejorar sin perder control.";
+  }else if(finalScore>=65){
+    title="Buena transformación, con ajustes pendientes";
+    summary="Lograste avances importantes, pero algunas decisiones todavía pueden generar fricción, riesgo o baja adopción. El siguiente paso es fortalecer la disciplina de mejora continua.";
+  }else{
+    title="La tecnología avanzó más rápido que la organización";
+    summary="Varias decisiones priorizaron velocidad o herramientas sin resolver suficientemente procesos, adopción o gobernanza. La simulación muestra dónde rediseñar antes de escalar.";
+  }
+  document.getElementById("finalTitle").textContent=title;
+  document.getElementById("finalSummary").textContent=summary;
+
+  const strengths=[];
+  if(metrics.efficiency>=65) strengths.push("Rediseño orientado a eficiencia y reducción de fricción.");
+  if(metrics.adoption>=65) strengths.push("Gestión adecuada de adopción y capacidades del equipo.");
+  if(metrics.data>=65) strengths.push("Mejora de calidad y uso de datos para decidir.");
+  if(metrics.coordination>=65) strengths.push("Mayor coordinación entre áreas y stakeholders.");
+  if(metrics.risk<=35) strengths.push("Buen equilibrio entre agilidad, seguridad y control.");
+  if(strengths.length<2) strengths.push("Identificaste oportunidades de transformación que pueden fortalecerse con un enfoque más sistémico.");
+
+  const improvements=[];
+  if(metrics.adoption<60) improvements.push("Trabajar gestión del cambio y capacitación vinculada al proceso.");
+  if(metrics.data<60) improvements.push("Definir estándares de datos, responsables y reglas de calidad.");
+  if(metrics.coordination<60) improvements.push("Reducir silos y aclarar responsables entre áreas.");
+  if(metrics.risk>45) improvements.push("Fortalecer permisos, trazabilidad y gobierno de información.");
+  if(metrics.efficiency<60) improvements.push("Revisar el flujo antes de automatizarlo.");
+  if(improvements.length<2) improvements.push("Mantener ciclos mensuales de medición y ajuste para sostener los avances.");
+
+  const recommendations=[
+    "Prioriza problemas y resultados, no herramientas.",
+    "Implementa en ciclos pequeños: piloto → medición → ajuste → escala.",
+    "Mide adopción, tiempo de respuesta, calidad de datos y satisfacción, no solo uso de tecnología."
+  ];
+
+  document.getElementById("strengths").innerHTML=strengths.map(x=>`<li>${x}</li>`).join("");
+  document.getElementById("improvements").innerHTML=improvements.map(x=>`<li>${x}</li>`).join("");
+  document.getElementById("recommendations").innerHTML=recommendations.map(x=>`<li>${x}</li>`).join("");
+
+  const rubric=[
+    ["Calidad de decisiones","Prioriza problemas y evita digitalizar procesos deficientes", finalScore>=75?"Alto":finalScore>=60?"Medio":"Bajo"],
+    ["Agilidad del proceso","Aprende y mejora sin dispersar recursos",rubricValue(structural)],
+    ["Personas y adopción","Involucra al equipo y facilita el cambio",rubricValue(people)],
+    ["Datos y gobernanza","Balancea calidad, acceso y riesgo",rubricValue(dataGov)],
+    ["Valor para stakeholders","Mejora experiencia y capacidad de respuesta",rubricValue(stakeholder)]
+  ];
+  document.getElementById("rubricBody").innerHTML=rubric.map(r=>`<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td><span class="badge">${r[2]}</span></td></tr>`).join("");
+
+  document.getElementById("historyList").innerHTML=history.map((h,i)=>`
+    <div class="history-item">
+      <b>Ronda ${i+1}</b>
+      <span>${h.choice}</span>
+      <span class="badge">${h.points>0?"+":""}${h.points} pts</span>
+    </div>`).join("");
+
+  switchScreen("final");
+  document.getElementById("sideProgress").style.width="100%";
+  document.getElementById("sidePct").textContent="100%";
+  document.getElementById("sideRound").textContent="Finalizado";
+}
+
+function resetSimulator(){
+  resetState();
+  switchScreen("intro");
+  document.getElementById("sideProgress").style.width="0%";
+  document.getElementById("sidePct").textContent="0%";
+  document.getElementById("sideRound").textContent="Sin iniciar";
+}
+
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+resetState();
+</script>
+</body>
+</html>
